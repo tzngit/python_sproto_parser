@@ -1,0 +1,44 @@
+.Some { # this is a type
+    name 0 : string # this is a string filed
+    id 1 : integer # this is a integer filed
+    bool 2 : boolean # this is a boolean filed
+    names 3 : *string #this is a string array
+    ids 4 : *integer #this is a integer array
+    bools 5 : *boolean #this is a boolean array
+
+    .NestedThing {
+        nest_name 0 : string
+        nest_id 1 : integer
+    }
+
+    n 6 : NestedThing
+}
+
+
+.Other {
+    .Some {
+        name 0 : string
+    }
+    name 0 : string
+    id 1 : integer
+    is_man 2 : boolean
+    s 3 : Some
+}
+
+foo 1 {
+    request {
+        s 0 : Some
+    }
+    response {
+        msg 0 : *string
+    }
+}
+
+bar 2 {  # define a new protocol (for RPC used) with tag 1
+    request Other  # Associate the type Person with foobar.request
+    response {  # define the foobar.response type
+        ok 0 : boolean
+    }
+}
+
+
