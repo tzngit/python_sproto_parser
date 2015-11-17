@@ -35,28 +35,34 @@ class Sproto(List):
     grammar = nomeaning, attr("items", maybe_some([Type, Protocol])), nomeaning
 #====================================================================
 
+_curr_parse_filename = ""
+_builtin_types = ["string", "integer", "boolean"]
+
 class Convert:
+    group = {}
     type_dict = {}
     protocol_dict = {}
     protocol_tags = {} #just for easiliy check
 
     @staticmethod
-    def parse(text, name):
+    def parse(text, name, is_append):
+        if not is_append:
+            Convert.group = {}
+            Convert.type_dict = {}
+            Convert.protocol_dict = {}
+            Convert.protocol_tags = {}
+        _curr_parse_filename = name
+
         obj = pypeg2_parse(text, Sproto)
         for i in obj.items:
             if hasattr(i,"tag"):
                 Convert.convert_protocol(i)
             else:
-                #conver all type
                 Convert.convert_type(i)
 
-        #pprint(Convert.type_dict)
-        #pprint(Convert.protocol_dict)
-
-        group = {}
-        group["type"] = Convert.type_dict
-        group["protocol"] = Convert.protocol_dict
-        return group
+        Convert.group["type"] = Convert.type_dict
+        Convert.group["protocol"] = Convert.protocol_dict
+        return Convert.group
     @staticmethod
     def convert_type(obj, parent_name = ""):
         type_name = obj.name
@@ -72,11 +78,16 @@ class Convert:
         struct = []
         for filed in obj.fileds:
             if type(filed) == Filed:
+                ok, filed_type = Convert.check_type_exists(filed.typename.name)
+                if not ok:
+                    print("Error: Undefined type %s in type %s at %s" % (filed.typename.name, name, _curr_parse_filename))
+                    sys.exit()
                 filed_info = {}
                 filed_info["name"] = filed.filed
                 filed_info["tag"] = filed.tag
                 filed_info["array"] = filed.typename.is_arr
                 filed_info["typename"] = filed.typename.name
+                filed_info["type"] = filed_type
                 struct.append(filed_info)
             elif type(filed) == Type:
                 Convert.convert_type(filed, name) 
@@ -85,23 +96,24 @@ class Convert:
     @staticmethod
     def convert_protocol(obj):
         if obj.name in Convert.protocol_dict.keys():
-            print("Error:redifine protocol %s\n" % obj.name)
+            print("Error:redifine protocol %s in %s\n" % (obj.name, _curr_parse_filename))
             return
         if obj.tag in Convert.protocol_tags.keys():
-            print("Error:redifine protocol tags %d" % obj.tag)
+            print("Error:redifine protocol tags %d in %s\n" % (obj.tag, _curr_parse_filename))
             return
         protocol = {}
         protocol["tag"] = obj.tag
         for fi in obj.fileds:
             if type(fi.pro_filed) == TypeName:
-                if Convert.check_type_exists(fi.pro_filed.name):
+                ok = Convert.check_type_exists(fi.pro_filed.name)
+                if not ok:
                     protocol[fi.subpro_type] = fi.pro_filed.name
                 else:
-                    print("Error:non define typename %s\n" % fi.pro_filed)
+                    print("Error:non define typename %s in %s\n" % (fi.pro_filed, _curr_parse_filename))
                     return
             elif type(fi.pro_filed) == Struct:
                 newtype_name = obj.name + "." + fi.subpro_type
-                Convert.type_dict[newtype_name] = Convert.convert_struct(fi.pro_filed)
+                Convert.type_dict[newtype_name] = Convert.convert_struct(fi.pro_filed, newtype_name)
                 protocol[fi.subpro_type] = newtype_name
            
         Convert.protocol_dict[obj.name] = protocol
@@ -109,17 +121,19 @@ class Convert:
 
     @staticmethod
     def check_type_exists(name):
+        if name in _builtin_types:
+            return True, "builtin"
         if name in Convert.type_dict.keys():
-            return True
+            return True, "UserDefine"
         else:
-            return False
+            return False, ""
 
 def dump():
     print("to do dump")
     pass
 
 __all__ = ["parse"]
-def parse(text, name = "=text"): #name param if for compatibility of sproto lua parser, no meaning
-    result = Convert.parse(text, name) 
+def parse(text, name="=text", is_append=False):
+    result = Convert.parse(text, name, is_append) 
     return result
 
