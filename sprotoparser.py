@@ -29,7 +29,7 @@ class Subprotocol(List):
     grammar = attr("subpro_type", Sub_pro_type), attr("pro_filed", [TypeName, Struct]), nomeaning
 
 class Protocol(List):
-    grammar = name(), attr("tag",tag), "{", nomeaning, attr("fileds", maybe_some(Subprotocol)), "}"
+    grammar = name(), attr("tag",tag), "{", nomeaning, attr("fileds", maybe_some(Subprotocol)), "}", nomeaning, endl
 
 class Sproto(List):
     grammar = nomeaning, attr("items", maybe_some([Type, Protocol])), nomeaning
