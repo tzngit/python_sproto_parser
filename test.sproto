@@ -41,4 +41,13 @@ bar 2 {  # define a new protocol (for RPC used) with tag 1
     }
 }
 
-
+.Person {
+    name 0 : string
+    addr 1 : string
+    sex  2 : integer
+    .PhoneNum {
+        type 0 : integer
+        number 1 : integer
+    }
+    numbers 3 : *PhoneNum
+}

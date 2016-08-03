@@ -9,5 +9,4 @@ sp = parse(text, "=text")
 
 import json
 print(json.dumps(sp, indent=4))
-
 dump(sp, "test.spb")
