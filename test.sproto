@@ -51,3 +51,13 @@ bar 2 {  # define a new protocol (for RPC used) with tag 1
     }
     numbers 3 : *PhoneNum
 }
+
+.A {
+    a 0 : integer
+    .B {
+        b 0 : integer
+    }
+    .C {
+        bb 0 : *B
+    }
+}
